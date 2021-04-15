@@ -1,0 +1,108 @@
+#-*- coding: UTF-8 -*-
+import sys
+import re
+from scipy import stats
+import numpy as np
+
+numTST = 0
+numTEM = 0
+numMIX = 0
+
+pop = {}
+with open (sys.argv[1],'r') as population:
+	for line in population.readlines():
+		line = line.rstrip('\n').split('\t')
+		pop[line[0]] = line[1]
+		if(line[1] == 'NSS'):
+			numTEM +=1
+		if(line[1] == 'SS'):
+			numTEM +=1
+		if(line[1] == 'TST'):
+			numTST +=1
+		if(line[1] == 'Mixed'):
+			numMIX +=1
+numTotal = numTST+numTEM+numMIX;
+
+#print (numTotal)
+snp =  open(sys.argv[2], mode='r')
+snpheader = snp.readline()
+snpheader_info = snpheader.rstrip('\n').split('\t')
+snpheader_info = snpheader_info[11:]
+#snpinfos = {}
+#allele1 = {}
+#allele2 = {}
+#genotype= {}
+snpinfo = snp.readline()
+while(snpinfo):
+	TMP_allele1 = 0
+	TST_allele1 = 0
+	MIX_allele1 = 0
+	TST_allele2 = 0
+	MIX_allele2 = 0
+	TMP_allele2 = 0
+	Ptemp = ''
+	Qtemp = ''
+	Ptst = ''
+	Qtst = ''
+	Ptst_temp = ''
+	Qtst_temp = ''
+	Fst = ''
+	numtemp = ''
+	numtst = ''
+	snpinfo = snpinfo.rstrip('\n').split('\t')
+	result=re.search('(.*)/(.*)',snpinfo[1])
+	#allele1[snpinfo[0]] = result[1]
+	#allele2[snpinfo[0]] = result[2]
+	allele1 = result[1]
+	allele2 = result[2]
+	snpid = snpinfo[0]
+	snpchr = snpinfo[2]
+	snppos = snpinfo[3]
+	snpinfo = snpinfo[11:]
+	listlen = len(snpinfo)
+	for num in range(listlen):
+		inbred = snpheader_info[num]
+		if(inbred in pop):
+			if(snpinfo[num] == allele1):
+				if(pop[inbred] == 'NSS'):
+					TMP_allele1 +=1
+				if(pop[inbred] == 'TST'):
+					TST_allele1 +=1
+				if(pop[inbred] == 'Mixed'):
+					MIX_allele1 +=1
+				if(pop[inbred] == 'SS'):
+					TMP_allele1 +=1
+			if(snpinfo[num] == allele2):
+				if(pop[inbred] == 'NSS'):
+					TMP_allele2 +=1
+				if(pop[inbred] == 'TST'):
+					TST_allele2 +=1
+				if(pop[inbred] == 'Mixed'):
+					MIX_allele2 +=1
+				if(pop[inbred] == 'SS'):
+					TMP_allele2 +=1
+	#total_gt = TMP_allele1+MIX_allele1+TST_allele1+TMP_allele2+MIX_allele2+TST_allele2
+	#total_allele1 = TMP_allele1+TST_allele1
+	#ratio_allele1=total_allele1/total_gt
+	#ratio_allele1_TMP = TMP_allele1/(TMP_allele1+TMP_allele2)
+	#ratio_allele1_TST = TST_allele1/(TST_allele1+TST_allele2)
+	Ptemp = TMP_allele1/(TMP_allele1+TMP_allele2)
+	Qtemp = TMP_allele2/(TMP_allele1+TMP_allele2)
+	Ptst  = TST_allele1/(TST_allele1+TST_allele2)
+	Qtst  = TST_allele2/(TST_allele1+TST_allele2)
+	Ptst_temp = (TMP_allele1 + TST_allele1)/(TMP_allele1+TMP_allele2+TST_allele1+TST_allele2)
+	Qtst_temp = 1 - Ptst_temp
+	numtemp = TMP_allele1+TMP_allele2
+	numtst = TST_allele1+TST_allele2
+	Fst = 1- (Ptemp*Qtemp*numtemp+Ptst*Qtst*numtst)/(Ptst_temp*Qtst_temp*(numtst+numtemp))
+	print(snpid,snpchr,snppos,Fst,sep='\t')
+	snpinfo = snp.readline()
+
+snp.close()
+
+#used to calculate the Fst value between TEMP(SS+NSS) and TST
+#input 1: the inbred population infomation,2 column file just like  "B73	SS", sep='\t'
+#input 2: the SNP hmp file
+#written by B.S.Titor, 2021.4.15
+#Ver 0.334323, primary version.
+#For Future Gadget. For our anarchical communism community.
