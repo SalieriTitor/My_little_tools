@@ -1,6 +1,7 @@
 #usage : perl Get2kbPromoterSeq.pl genomeSeq.fa geneBedFile >output.fa
 #format of geneBedFile : chr  start end geneId  someInfo  strand
 #written by Barrel Titor, 2022.2.7
+#changed in 2022.2.8, revise error $promoter{$a[3]} =~ s/ATGC/TACG/g to $promoter{$a[3]} =~ tr/ATGC/TACG/
 #primary ver, ver 0.330215
 open (FASTA,$ARGV[0]);
 $header = <FASTA>;
@@ -27,7 +28,7 @@ while(<BED>){
     $start = $a[2];
     $promoter{$a[3]} = substr($seq{$a[0]},$start,2000);
     $promoter{$a[3]} = reverse($promoter{$a[3]});
-    $promoter{$a[3]} =~ s/ATGC/TACG/g;
+    $promoter{$a[3]} =~ tr/ATGC/TACG/;
   }
 }
 for $keys(sort keys %promoter){
